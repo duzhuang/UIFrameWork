@@ -54,7 +54,8 @@ export default class UIAnimationComponent extends cc.Component {
     @property({ visible: false, override: true })
     node: cc.Node = this.node;
 
-    protected onLoad(): void {
 
-    }
+    protected start(): void {
+        
+    }   
 }

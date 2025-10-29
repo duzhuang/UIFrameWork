@@ -410,14 +410,12 @@
     "useBuiltInAnimation": true,
     "customShowAnimationName": "",
     "customHideAnimationName": "",
-    "showAnimation": 0,
-    "hideAnimation": 0,
+    "showAnimation": 1,
+    "hideAnimation": 1,
     "showDuration": 0.3,
     "hideDuration": 0.3,
-    "animationNode": {
-      "__id__": 6
-    },
-    "easing": 0,
+    "animationNode": null,
+    "easing": 22,
     "_id": ""
   },
   {

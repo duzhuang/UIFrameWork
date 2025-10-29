@@ -251,12 +251,13 @@ export class UIManager implements IUIManager {
      * @param options UIOptions
      * @returns UI 节点或 null
      */
-    private async getUINode(options: UIOptions): Promise<cc.Node | null> {
-        const uiNode = this.getUINodeFromCachePool(options);
+    private async getUINode(options: UIOptions): Promise<cc.Node> {
+        let uiNode = this.getUINodeFromCachePool(options);
         if (uiNode) {
             return uiNode;
         }
-        return this.initUINode(options);
+        uiNode = await this.initUINode(options);
+        return uiNode;
     }
 
     /**
@@ -265,8 +266,8 @@ export class UIManager implements IUIManager {
      * @returns UI 节点
      */
     private getUINodeFromCachePool(options: UIOptions): cc.Node {
-        const { uiName } = options;
-        return this.m_cachePool.get("", uiName) ?? null;
+        const { uiName } = options;        
+        return this.m_cachePool.get(options.layer, uiName);
     }
 
     /**
@@ -274,21 +275,20 @@ export class UIManager implements IUIManager {
      * @param options UIOptions
      * @returns UI 节点或 null
      */
-    private async initUINode(options: UIOptions): Promise<cc.Node | null> {
+    private async initUINode(options: UIOptions): Promise<cc.Node> {
         const { type, path, prefab } = options;
         if (type === 'path') {
             try {
                 const uiNode = await this.m_resourceLoader.load<cc.Prefab>(path);
-                return cc.instantiate(uiNode) ?? null;
+                return cc.instantiate(uiNode);
             } catch (error) {
                 console.error(`initUINode:load: 加载路径 ${path} 失败`, error);
-                return null;
+                return;
             }
         }
         if (type === 'prefab') {
-            return cc.instantiate(prefab) ?? null;
-        }
-        return null;
+            return cc.instantiate(prefab);
+        }        
     }
 
     /**
@@ -342,8 +342,8 @@ export class UIManager implements IUIManager {
         }
 
         const animationCom = uiNode.getComponent(UIAnimationComponent);
-        if (!animationCom) {
-            console.error(`没有找到 ${uiName} 的动画组件`);
+        if (!animationCom || !animationCom.enabledInHierarchy) {
+            console.error(`没有找到 ${uiName} 的动画组件 或 组件未启用`);
             return;
         }
 
@@ -378,8 +378,8 @@ export class UIManager implements IUIManager {
         }
 
         const animationCom = uiNode.getComponent(UIAnimationComponent);
-        if (!animationCom) {
-            console.error(`没有找到 ${uiName} 的动画组件`);
+        if (!animationCom || !animationCom.enabledInHierarchy) {
+            console.error(`没有找到 ${uiName} 的动画组件 或 组件未启用`);
             return;
         }
 
