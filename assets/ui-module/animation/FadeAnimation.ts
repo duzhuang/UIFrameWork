@@ -14,7 +14,7 @@ export class FadeAnimation extends UIAnimationBase {
     public show(options: UIAnimationOptions, callback?: () => void): void {
         const { node, animationNode = node, durationSecond, easing } = options;
         const targetNode = animationNode || node;
-        const targetDuration = durationSecond ?? this.m_defaultDurationSecond;
+        const targetDuration = durationSecond >= 0 ? durationSecond : this.m_defaultDurationSecond;
         const targetEasing = easing ?? this.m_defaultEasing;
 
         if (!targetNode) {
@@ -42,7 +42,7 @@ export class FadeAnimation extends UIAnimationBase {
     public hide(options: UIAnimationOptions, callback?: () => void): void {
         const { node, animationNode = node, durationSecond, easing } = options;
         const targetNode = animationNode || node;
-        const targetDuration = durationSecond ?? this.m_defaultDurationSecond;
+        const targetDuration = durationSecond >= 0 ? durationSecond : this.m_defaultDurationSecond;
         const targetEasing = easing ?? this.m_defaultEasing;
 
         if (!targetNode) {

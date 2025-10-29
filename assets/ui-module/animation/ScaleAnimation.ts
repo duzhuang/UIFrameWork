@@ -11,17 +11,17 @@ export class ScaleAnimation extends UIAnimationBase {
     public show(options: UIAnimationOptions, callback?: () => void): void {
         const { node, animationNode, durationSecond, easing } = options;
         const targetNode = animationNode || node;
-        const targetDurationSecond = durationSecond ?? this.m_defaultDurationSecond;
+        const targetDurationSecond = durationSecond >= 0 ? durationSecond : this.m_defaultDurationSecond;
         const targetEasing = easing ?? this.m_defaultEasing;
 
         //原始的缩放值
-        const originalSacle = targetNode.scale;        
+        const originalSacle = targetNode.scale;
         targetNode.scale = 0;
 
-        try {            
+        try {
             cc.tween(targetNode)
                 .to(targetDurationSecond, { scale: originalSacle }, { easing: targetEasing })
-                .call(() => {                    
+                .call(() => {
                     callback?.();
                 })
                 .start();
@@ -35,12 +35,12 @@ export class ScaleAnimation extends UIAnimationBase {
     public hide(options: UIAnimationOptions, callback?: () => void): void {
         const { node, animationNode, durationSecond, easing } = options;
         const targetNode = animationNode || node;
-        const targetDurationSecond = durationSecond ?? this.m_defaultDurationSecond;
+        const targetDurationSecond = durationSecond >= 0 ? durationSecond : this.m_defaultDurationSecond;
         const targetEasing = easing ?? this.m_defaultEasing;
-         //原始的缩放值
-        const originalSacle = targetNode.scale; 
-     
-        try {            
+        //原始的缩放值
+        const originalSacle = targetNode.scale;
+
+        try {
             cc.tween(targetNode)
                 .to(targetDurationSecond, { scale: 0 }, { easing: targetEasing })
                 .call(() => {
