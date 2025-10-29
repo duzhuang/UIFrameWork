@@ -407,9 +407,9 @@
       "__id__": 1
     },
     "_enabled": true,
-    "useBuiltInAnimation": true,
-    "customShowAnimationName": "111",
-    "customHideAnimationName": "222",
+    "useBuiltInAnimation": false,
+    "customShowAnimationName": "customAnimation",
+    "customHideAnimationName": "customAnimation",
     "showAnimation": 1,
     "hideAnimation": 1,
     "showDuration": 0,

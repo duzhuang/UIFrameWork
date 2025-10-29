@@ -1,4 +1,5 @@
 import { UI } from "../ui-module/index";
+import { CustomAnimation } from "./cusANimation";
 
 
 const { ccclass, property } = cc._decorator;
@@ -32,5 +33,9 @@ export default class main extends cc.Component {
 
     onClickClose() {
         UI.manager.close("prefabNode");
+    }
+
+    onClickRegister() {
+        UI.registerCustomAnimation("customAnimation", CustomAnimation);
     }
 }
