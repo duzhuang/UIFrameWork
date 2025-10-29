@@ -2,7 +2,7 @@ import { IUICachePool } from "./interfaces/IUICachePool";
 
 export class UICachePool implements IUICachePool {
 
-    private m_layerPools: Map<string, Map<string, cc.Node[]>> = new Map();
+    private m_layerPools: Map<string, Map<string, cc.Node>> = new Map();
 
     private static m_instance: UICachePool;
 
@@ -24,10 +24,8 @@ export class UICachePool implements IUICachePool {
 
         const layerPool = this.m_layerPools.get(layer)!;
         if (!layerPool.has(uiName)) {
-            layerPool.set(uiName, []);
+            layerPool.set(uiName, uiNode);
         }
-
-        layerPool.get(uiName)!.push(uiNode);
     }
 
     public get(layer: string, uiName: string): cc.Node | null {
@@ -35,7 +33,7 @@ export class UICachePool implements IUICachePool {
             return null;
         }
         const layerPool = this.m_layerPools.get(layer)!;
-        return layerPool.get(uiName)!.pop()!;
+        return layerPool.get(uiName)!;
     }
 
     public has(layer: string, uiName: string): boolean {
@@ -49,7 +47,7 @@ export class UICachePool implements IUICachePool {
         }
 
         const pool = layerPool.get(uiName);
-        if (!pool || pool.length === 0) {
+        if (!pool) {
             return false;
         }
 

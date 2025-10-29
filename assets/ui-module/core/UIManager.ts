@@ -15,12 +15,11 @@ export class UIManager implements IUIManager {
     private static m_instance: UIManager = null;
 
     private m_layerManager: IUILayerManager = null;
+    /** 缓存池 */
     private m_cachePool: IUICachePool = null;
     private m_animationRegistry: IUIAnimationRegistry = null;
     private m_resourceLoader: IResourceLoader = null;
 
-    /** 保存已打开的 uiName → 节点 */
-    private m_uiOpenedMap: Map<string, cc.Node> = new Map();
     /** 保存已打开的 uiName → UIOptions */
     private m_optionsMap: Map<string, UIOptions> = new Map();
     /** 正在打开 */
@@ -81,8 +80,8 @@ export class UIManager implements IUIManager {
             let uiNode: cc.Node = null;
 
             // - 如果已经打开，直接返回已打开的节点
-            if (this.m_uiOpenedMap.has(options.uiName)) {
-                uiNode = this.m_uiOpenedMap.get(options.uiName);
+            if (this.m_cachePool.has(options.layer, options.uiName)) {
+                uiNode = this.m_cachePool.get(options.layer, options.uiName);
                 uiNode.active = true;
             } else {
                 // - 从缓存池或资源加载器加载UI节点
@@ -104,9 +103,9 @@ export class UIManager implements IUIManager {
             await this.playOpenAnimation(options, uiNode);
 
             // - 存储已打开的 uiName → 节点
-            if(!this.m_uiOpenedMap.has(options.uiName)){
-                this.m_uiOpenedMap.set(options.uiName, uiNode);
-            }            
+            if(!this.m_cachePool.has(options.layer, options.uiName)){
+                this.m_cachePool.add(options.layer, options.uiName, uiNode);
+            }        
             
             return uiNode;
         })();
@@ -140,7 +139,7 @@ export class UIManager implements IUIManager {
         }
 
         // 1、无 uiName 或 未打开，直接返回
-        if (!uiName || !this.m_uiOpenedMap.has(uiName)) {
+        if (!uiName || !this.m_cachePool.has(options.layer, uiName)) {
             return;
         }
 
@@ -152,18 +151,21 @@ export class UIManager implements IUIManager {
         // 3、执行关闭逻辑
         const promise = (async (): Promise<void> => {
             // - 获取 UI 节点
-            const uiNode = this.m_uiOpenedMap.get(uiName)!;
+            const uiNode = this.m_cachePool.get(options.layer, uiName)!;
             if (!uiNode) {
                 return;
             }
+
             // - 播放关闭动画
-            await this.playCloseAnimation(options, uiNode);
+            if (uiNode.active) {                
+                await this.playCloseAnimation(options, uiNode);
+            }            
 
             // - 检查是否需要销毁节点
             if(options.destroyOnClose){
                 // - 从 UI 层移除UI节点
                 this.removeUINodeFromLayer(options, uiNode);                
-                this.m_uiOpenedMap.delete(uiName);
+                this.m_cachePool.remove(options.layer, uiName);
                 uiNode.destroy();
             }else{
                 uiNode.active = false;
@@ -189,8 +191,10 @@ export class UIManager implements IUIManager {
      */
     async closeAll(): Promise<void> {
         // - 关闭所有已打开的 UI
-        for (const uiName of Object.keys(this.m_uiOpenedMap)) {
-            await this.close(uiName);
+        for (const uiPool of Object.keys(this.m_cachePool)) {
+            for (const uiName of Object.keys(this.m_cachePool[uiPool])) {
+                await this.close(uiName);
+            }
         }
     }
 
@@ -200,14 +204,21 @@ export class UIManager implements IUIManager {
      * @returns 是否已打开
      */
     isOpened(uiName: string): boolean {
-        return this.m_uiOpenedMap.has(uiName);
+        const options = this.m_optionsMap.get(uiName);
+        if (!options) {
+            return false;
+        }
+        if (!this.m_cachePool.has(options.layer, uiName)) {
+            return false;
+        }
+        const uiNode: cc.Node = this.m_cachePool.get(options.layer, uiName);
+        return uiNode.active;
     }
 
     /**
      * 清除所有已打开的UI
      */
-    clear(): void {
-        this.m_uiOpenedMap.clear();
+    clear(): void {        
         this.m_optionsMap.clear();
         this.m_openingLocks.clear();
         this.m_closingLocks.clear();
@@ -349,12 +360,21 @@ export class UIManager implements IUIManager {
 
         const animationOptions: UIAnimationOptions = {
             durationSecond: animationCom.showDuration,
-            easing: this.getEasingString(animationCom.easing),
+            easing: this.getEasingString(animationCom.showEasing),
             node: animationCom.node,
             animationNode: animationCom.animationNode
         };
 
-        const animationName = this.getAnimationName(animationCom.showAnimation);
+        // 播放自定义动画或内建动画
+        const useBuiltInAnimation = animationCom.useBuiltInAnimation;
+        let animationName = "";
+        if(useBuiltInAnimation){
+            // 播放内建动画
+            animationName = this.getAnimationName(animationCom.showAnimation);
+        }else{
+            // 播放自定义动画
+            animationName = animationCom.customShowAnimationName;
+        }
 
         const animation = this.m_animationRegistry.get(animationName);
         if (!animation) {
@@ -383,15 +403,24 @@ export class UIManager implements IUIManager {
             return;
         }
 
+        // 播放关闭动画选项
         const animationOptions: UIAnimationOptions = {
             durationSecond: animationCom.hideDuration,
-            easing: this.getEasingString(animationCom.easing),
+            easing: this.getEasingString(animationCom.hideEasing),
             node: animationCom.node,
             animationNode: animationCom.animationNode
         };
 
-
-        const animationName = this.getAnimationName(animationCom.hideAnimation);
+        // 播放自定义动画或内建动画
+        const useBuiltInAnimation = animationCom.useBuiltInAnimation;
+        let animationName = "";
+        if(useBuiltInAnimation){
+            // 播放内建动画
+            animationName = this.getAnimationName(animationCom.hideAnimation);
+        }else{
+            // 播放自定义动画
+            animationName = animationCom.customHideAnimationName;
+        }
         const animation = this.m_animationRegistry.get(animationName);
         if (!animation) {
             console.error(`没有找到 ${animationName} 的动画`);

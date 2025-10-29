@@ -49,7 +49,10 @@ export default class UIAnimationComponent extends cc.Component {
     animationNode: cc.Node = null;
 
     @property({ type: EasingType, tooltip: '动画曲线' })
-    easing = EasingType.BACK_IN;
+    showEasing = EasingType.BACK_IN;
+
+    @property({ type: EasingType, tooltip: '隐藏动画曲线' })
+    hideEasing = EasingType.BACK_OUT;
 
     @property({ visible: false, override: true })
     node: cc.Node = this.node;

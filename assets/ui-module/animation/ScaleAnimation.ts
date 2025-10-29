@@ -37,12 +37,16 @@ export class ScaleAnimation extends UIAnimationBase {
         const targetNode = animationNode || node;
         const targetDurationSecond = durationSecond ?? this.m_defaultDurationSecond;
         const targetEasing = easing ?? this.m_defaultEasing;
+         //原始的缩放值
+        const originalSacle = targetNode.scale; 
      
         try {            
             cc.tween(targetNode)
                 .to(targetDurationSecond, { scale: 0 }, { easing: targetEasing })
                 .call(() => {
                     node.active = false;
+                    //恢复原始的缩放值
+                    targetNode.scale = originalSacle;
                     callback?.();
                 })
                 .start();

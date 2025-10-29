@@ -23,7 +23,7 @@ export default class main extends cc.Component {
             type: "path",
             path: "prefabNode",
             layer: "PopUp",
-            destroyOnClose: true,
+            destroyOnClose: false,
             zIndex: 1000,
             hasAnimation: true,
             cacheable: true,
